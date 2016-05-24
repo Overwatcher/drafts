@@ -124,7 +124,7 @@ int main() {
 					close(i);
 					continue;
 				}
-				if (quantity == -1) {
+				if (quantity <= -1) {
 					FD_SET(i, &write_set);
 					FD_CLR(i, &read_set);
 					continue;
