@@ -7,6 +7,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <arpa/inet.h>
+#include <errno.h>
 using namespace std;
 class user {
 	private:
@@ -102,7 +103,16 @@ int main() {
 			if (FD_ISSET(i, &read_set)) {
 				int length;
 				int quantity;
-				int count = recv(i, &length, sizeof(int), 0);
+				int count = recv(i, &length, sizeof(int), MSG_DONTWAIT);
+				if (count == -1) {
+					perror("recv error");
+					if (errno == EAGAIN || errno == EWOULDBLOCK) {
+						cout<<"Not inteded to handle partial data and wait. Socketfd:"<<i<<endl;
+					}
+					FD_CLR(i, &master);
+					close (i);
+					continue;
+				}
 				if (count == 0) {
 					cout<<"User closed connection. Socket fd:"<<i<<endl;
 					FD_CLR(i, &master);
@@ -110,16 +120,19 @@ int main() {
 					continue;
 				}
 				if (count < sizeof(int)) {
-					cout<<"Dont want to handle partial recv. Socket fd"<<i<<endl;
+					cout<<"Dont want to handle partial recv. Socket fd:"<<i<<endl;
 					FD_CLR(i, &master);
 					close(i);
 					continue;
 				}
 				cout<<"L:"<<length<<endl;
 				count = 0;
-				count = recv(i, &quantity, sizeof(int), 0);
-				if (count < sizeof(int)) {
-					cout<<"User closed connection or other error. Socket fd:"<<i<<endl;
+				count = recv(i, &quantity, sizeof(int), MSG_DONTWAIT);
+				if (count < 4) {
+					if (errno == EAGAIN || errno == EWOULDBLOCK) {
+						cout<<"Not inteded to handle partial data and wait. Socketfd:"<<i<<endl;
+					} else 
+						cout<<"User closed connection or other error. Socket fd:"<<i<<endl;
 					FD_CLR(i, &master);
 					close(i);
 					continue;
@@ -133,9 +146,12 @@ int main() {
 				double number;
 				double sum = 0;
 				for (int j = 0; j < quantity; j++ ) {
-					count = recv(i, &number, sizeof(double), 0);
-					if (count < sizeof(double) ) {
-						cout<<"Wrong user data. Socket fd:"<<i<<endl;
+					count = recv(i, &number, sizeof(double), MSG_DONTWAIT);
+					if (count < 8 ) {
+						if (errno == EAGAIN || errno == EWOULDBLOCK) {
+							cout<<"Not inteded to handle partial data and wait. Socketfd:"<<i<<endl;
+						} else
+							cout<<"Wrong user data. Socket fd:"<<i<<endl;
 						FD_CLR(i, &master);
 						close(i);
 						break;
