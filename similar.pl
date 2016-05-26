@@ -19,7 +19,7 @@ my $str = <$fh>;
 my @array = split(' ', $str);
 my $size = 0 + @array;
 for (@array) {
-	if (!looks_like_number($_) || int($_) != $_ or $_ >= $size or $_ < 0) {
+	if (!looks_like_number($_) or int($_) != $_ or $_ >= $size or $_ < 0) {
 		die "Wrong data";
 	}
 }
