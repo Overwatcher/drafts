@@ -38,3 +38,4 @@ for (my $i = 0; $i < $size; $i++) {
 }
 
 print "$retval\n";
+close $fh;
