@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <errno.h>
+#define N 2048
 using namespace std;
 char *FormMessage(int *length, int *quantity, double *ar) {
 	char *msg = new char[sizeof(int) + *length];
@@ -48,7 +49,7 @@ int ReadDoubles(char *str, double *ar, const int limit) {
 
 }
 int main() {
-	cout<<"Enter the Ipv4 ->";
+	cout<<"Enter the Ipv4 -> ";
 	int size;
 	size_t alloc =0;
 	char *ip = NULL;
@@ -61,7 +62,7 @@ int main() {
 	else ip[size -1] = 0;
 	for (int i = 0; i < size - 1; i++) printf("%c", ip[i]);
 	cout<<endl;
-	cout<<"Enter the service ->";
+	cout<<"Enter the service -> ";
 	char *port = NULL;
 	alloc = 0;
 	size = getline(&port, &alloc, stdin);
@@ -85,6 +86,7 @@ int main() {
 	if (getaddrinfo(ip, port, &hints, &res)) {
 		perror("getaddrinfo");
 		free(port);
+	cout<<"Forming message..."<<endl;
 		free(ip);
 		return 1;
 	}
@@ -109,11 +111,11 @@ int main() {
 	free(port);
 	cout<<"Connected!"<<endl;
 	
-	cout<<"Enter doubles(no more than 10) separated with space ->";
+	cout<<"Enter doubles(no more than "<<N<<" ) separated with space -> ";
 	
 	char *string = NULL;
 	char *msg;
-	double array[10];
+	double *array = new double[N];
 	int quantity = 0;
 	alloc = 0;
 	size = getline(&string, &alloc, stdin);
@@ -124,12 +126,14 @@ int main() {
 		return 1;	
 	}
 	else string[size - 1] = 0;
-	quantity = ReadDoubles(string, array, 10);
+	cout<<"Forming message..."<<endl;
+	quantity = ReadDoubles(string, array, N);
 	int length = quantity * sizeof(double) + sizeof(int);
-	cout<<"Sending ..."<<endl;
 	msg = FormMessage(&length, &quantity, array);
+	cout<<"Sending ..."<<endl;
 	if (length + sizeof(int) != send(sockfd, msg, length + sizeof(int) , 0)) {
 		cout<<"Couldn't send the entire data"<<endl;
+		perror("send");
 		close(sockfd);
 		return 1;
 	}
@@ -137,7 +141,7 @@ int main() {
 	
 	free(string);
 	delete(msg);
-	cout<<"Type 'get' to get sum ->";
+	cout<<"Type 'get' to get sum -> ";
 	char *get = NULL;
 	alloc = 0;
 	size = getline(&get, &alloc, stdin);
@@ -158,6 +162,7 @@ int main() {
 	iget[1] = -1;
 	if (sizeof(iget) != send(sockfd, iget, sizeof(iget), 0)) {
 		cout<<"Couldn't send the entire date"<<endl;
+		perror("send");
 		close(sockfd);
 		return 1;
 	}
